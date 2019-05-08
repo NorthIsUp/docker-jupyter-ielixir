@@ -27,6 +27,13 @@ RUN curl -O https://packages.erlang-solutions.com/erlang-solutions_1.0_all.deb \
     && rm -rf /var/lib/apt/lists/* \
     && echo "$(elixir --version)"
 
+# install jupyter
+RUN pip install --no-cache jupyter
+
+RUN useradd -ms /bin/bash jupyter
+USER jupyter
+WORKDIR /home/jupyter
+
 # install iElixir jupyter kernel
 RUN git clone https://github.com/pprzetacznik/IElixir.git \
     && cd IElixir \
@@ -37,13 +44,15 @@ RUN git clone https://github.com/pprzetacznik/IElixir.git \
     && mix deps.compile \
     && ./install_script.sh
 
-# install jupyter
-RUN pip install jupyter[notebook]
-
-RUN useradd -ms /bin/bash jupyter
-USER jupyter
-
-WORKDIR /home/jupyter
 EXPOSE 8888
+VOLUME /notebooks
 
-CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--NotebookApp.custom_display_url=http://localhost:8888"]
+CMD [ \
+    "jupyter", \
+    "notebook", \
+    "--no-browser", \
+    "--ip=0.0.0.0", \
+    "--notebook-dir=/notebooks", \
+    "--NotebookApp.custom_display_url=http://localhost:8888", \
+    "--MultiKernelManager.default_kernel_name=ielixir" \
+    ]
